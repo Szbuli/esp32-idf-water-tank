@@ -1,0 +1,37 @@
+# 💧 ESP32 Water Tank Controller
+
+This project is an ESP32-based **smart water tank controller**, developed using the **ESP-IDF framework**.  
+It monitors water levels via a temperature sensor and ultrasonic sensor, detects overflow, and controls two irrigation pumps.  
+Network connectivity is provided via a W5500 Ethernet module using SPI.
+
+## 🕸️ Ethernet – W5500 (SPI)
+| GPIO | Function      |
+|------|---------------|
+| 14   | SPI SCLK      |
+| 13   | SPI MOSI      |
+| 12   | SPI MISO      |
+| 15   | SPI CS        |
+| 4    | Interrupt Pin |
+| 5    | PHY Reset     |
+
+## 🌡️ Temperature Sensor – DS18B20
+| GPIO | Function |
+|------|----------|
+| 22   | 1-wire   |
+
+## 🌊 Ultrasonic Water Sensor – A02YYUW
+| GPIO | Function |
+|------|----------|
+| 16   | RX       |
+| 17   | TX       |
+
+## 🛑 Overflow Sensor
+| GPIO | Function |
+|------|----------|
+| 21   | Input    |
+
+## 💧 Pump Relays
+| GPIO | Relay        |
+|------|--------------|
+| 18   | Pump Relay 1 |
+| 19   | Pump Relay 2 |

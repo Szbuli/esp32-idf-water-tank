@@ -1,0 +1,32 @@
+#pragma once
+
+#include "driver/gpio.h"
+
+#define MIN_DISTANCE 30
+#define MAX_DISTANCE 4500
+
+#define A02YYUW_SERIAL_BAUD_RATE 9600
+#define SERIAL_HEAD_DATA 0xff
+
+#define A02YYUW_SERIAL_PIN_RX 16
+#define A02YYUW_SERIAL_PIN_TX 17
+
+#define A02YYUW_UART_PORT UART_NUM_2
+
+
+
+#define SERIAL_AVAILABLE_CHECK_DELAY 50
+#define SERIAL_AVAILABLE_CHECK_CICLES 10 // SERIAL_AVAILABLE_CHECK_DELAY * SERIAL_AVAILABLE_CHECK_CICLES = 500ms
+
+enum A02YYUW_MEASSUREMENT_STATUS {
+    DistanceSensor_A02YYUW_MEASSUREMENT_STATUS_OK = 0,
+    DistanceSensor_A02YYUW_MEASSUREMENT_STATUS_ERROR_CHECK_SUM = -1,
+    DistanceSensor_A02YYUW_MEASSUREMENT_STATUS_ERROR_MAX_LIMIT = -2,
+    DistanceSensor_A02YYUW_MEASSUREMENT_STATUS_ERROR_MIN_LIMIT = -3,
+    DistanceSensor_A02YYUW_MEASSUREMENT_STATUS_ERROR_SERIAL = -4
+};
+
+void initA02yyuw();
+void persistSensorHeight(int sensorHeight);
+void persistMaxWaterLevel(int maxWaterLevel);
+
