@@ -66,7 +66,7 @@ void mqtt_event_handler(void* handler_args, esp_event_base_t base, int32_t event
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
 
-        esp_mqtt_client_enqueue(mqtt_client, MQTT_STATUS_TOPIC, ONLINE_PAYLOAD, 0, 0, 0, true);
+        esp_mqtt_client_enqueue(mqtt_client, MQTT_STATUS_TOPIC, ONLINE_PAYLOAD, 0, 0, true, true);
 
         esp_mqtt_client_subscribe(mqtt_client, MQTT_PUMP_TOPIC, 0);
         esp_mqtt_client_subscribe(mqtt_client, MQTT_OVERFLOW_PUMP_TOPIC, 0);
