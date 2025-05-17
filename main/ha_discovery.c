@@ -15,7 +15,7 @@ void addDeviceConfig(cJSON* root) {
     device = cJSON_CreateObject();
     cJSON_AddStringToObject(device, "sw_version", VERSION);
     cJSON_AddStringToObject(device, "manufacturer", "zbl");
-    cJSON_AddStringToObject(device, "identifiers", "water-tank");
+    cJSON_AddStringToObject(device, "identifiers", MQTT_DEVICE_ID);
     cJSON_AddStringToObject(device, "name", "Water tank");
     cJSON_AddStringToObject(device, "model", "Water tank");
 
