@@ -16,9 +16,10 @@ static const char* TAG = "overflow";
 #define GPIO_OUTPUT_PIN_SEL  (1ULL<<OVERFLOW_GPIO)
 
 bool autoMode = false;
-int buttonState = GPIO_LEVEL_LOW;
+int buttonState = 2; // 2 so it will be changed on first read
 int counter = 100;
 int delayCounter = 0;
+bool overrunActive = false;
 
 const char* OVERFLOW_PUMP_MODE_KEY = "of-pump-mode";
 
@@ -40,31 +41,38 @@ void turnOffOverFlowPump() {
     turnOffRelay2();
 }
 
-void updateOverflowPumpIfNeeded(bool overflowSensorActive) {
-    if (autoMode && delayCounter > 5) {
-        if (overflowSensorActive) {
+void updateOverflowPumpIfNeeded(bool overflowSensorActive, bool stateChanged) {
+    if (autoMode) {
+        if (overflowSensorActive && stateChanged) {
             turnOnOverFlowPump();
+            overrunActive = false;
         }
         else {
-            turnOffOverFlowPump();
+            if (stateChanged) {
+                overrunActive = true;
+                delayCounter = 0;
+            }
+            if (overrunActive && delayCounter > 12) {
+                turnOffOverFlowPump();
+                overrunActive = false;
+            }
+            delayCounter++;
         }
-        delayCounter = 0;
     }
-    delayCounter++;
 }
 
 void readOverflowSensor() {
     int newButtonState = gpio_get_level(OVERFLOW_GPIO);
-    ;
-    if (buttonState != newButtonState || counter == 100) {
+    bool stateChanged = (buttonState != newButtonState);
+    if (stateChanged || counter == 100) {
         if (newButtonState == GPIO_LEVEL_LOW) {
             ESP_LOGI(TAG, "overflow sensor ON");
-            updateOverflowPumpIfNeeded(true);
+            updateOverflowPumpIfNeeded(true, stateChanged);
             esp_mqtt_client_enqueue(mqtt_client, MQTT_OVERFLOW_SENSOR_TOPIC, ON_PAYLOAD, 0, 0, 0, true);
         }
         else {
             ESP_LOGI(TAG, "overflow sensor OFF");
-            updateOverflowPumpIfNeeded(false);
+            updateOverflowPumpIfNeeded(false, stateChanged);
             esp_mqtt_client_enqueue(mqtt_client, MQTT_OVERFLOW_SENSOR_TOPIC, OFF_PAYLOAD, 0, 0, 0, true);
         }
         counter = 0;
@@ -78,7 +86,7 @@ void loopOverflow() {
     while (1) {
         readOverflowSensor();
 
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
