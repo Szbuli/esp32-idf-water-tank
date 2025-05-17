@@ -109,5 +109,9 @@ void initOverflow() {
 void persistOverflowPumpAutoMode(bool enabled) {
     persistMemory(OVERFLOW_PUMP_MODE_KEY, enabled);
     autoMode = enabled;
+
+    // reset 
+    turnOffOverFlowPump();
+    buttonState = 3;
 }
 
