@@ -1,8 +1,6 @@
 #include "freeRTOS\freeRTOS.h"
 #include "freeRTOS\task.h"
 
-#include "onewire.h"
-
 #include "mqtt_client.h"
 
 #include "ds18b20.h"
@@ -13,72 +11,41 @@
 
 #include "mqtt.h"
 
-#define GPIO_DS18B20_0       22
+#include <ds18x20.h>
+
+#define SENSOR_READ_FREQUENCY_MS 30 * 1000
 #define MAXDEVS              1
 
-static const char* TAG = "ds18b20";
+static const gpio_num_t SENSOR_GPIO = GPIO_NUM_4;
 
-OW ow;
+static const char* TAG = "ds18b20";
 
 void publishTemperature(const char* temperature) {
     esp_mqtt_client_enqueue(mqtt_client, MQTT_WATER_TEMP_TOPIC, temperature, 0, 0, 0, true);
 }
 
 void loopDs18b20() {
+    float temperature;
+    esp_err_t res;
     while (1) {
-        if (ow_reset(&ow)) {
-            // scan bus for slaves
-            uint64_t romcode[MAXDEVS];
-            int num_devs = ow_romsearch(&ow, romcode, MAXDEVS, OW_SEARCH_ROM);
-
-            if (num_devs == 1) {
-                ESP_LOGV(TAG, "Found %d devices\n", num_devs);
-                for (int i = 0; i < num_devs; i += 1) {
-                    ESP_LOGV(TAG, "\t%d: 0x%llx\n", i, romcode[i]);
-                }
-
-                ow_reset(&ow);
-                ow_send(&ow, OW_SKIP_ROM);
-                ow_send(&ow, DS18B20_CONVERT_T);
-
-                ESP_LOGV(TAG, "wait for the conversions to finish");
-                // wait for the conversions to finish
-                while (ow_read(&ow) == 0);
-
-
-                ow_reset(&ow);
-                ow_send(&ow, OW_SKIP_ROM);
-                ow_send(&ow, DS18B20_READ_SCRATCHPAD);
-                int16_t temp = 0;
-                temp = ow_read(&ow) | (ow_read(&ow) << 8);
-
-
-                float temperature = temp / 16.0;
-                char temp_str[16];
-                snprintf(temp_str, sizeof(temp_str), "%.1f", temperature);
-                ESP_LOGI(TAG, "\t%s", temp_str);
-
-                publishTemperature(temp_str);
-            }
-            else {
-                ESP_LOGE(TAG, "No devices found");
-                publishTemperature("");
-            }
-
-        }
-        else {
-            ESP_LOGE(TAG, "ow reset false");
+        res = ds18b20_measure_and_read(SENSOR_GPIO, DS18X20_ANY, &temperature);
+        if (res != ESP_OK) {
+            ESP_LOGE(TAG, "Could not read from sensor: %d (%s)", res, esp_err_to_name(res));
             publishTemperature("");
         }
+        else {
+            ESP_LOGI(TAG, "Sensor: %.2f°C", temperature);
+             char temp_str[16];
+            snprintf(temp_str, sizeof(temp_str), "%.1f", temperature);
+            publishTemperature(temp_str);            
+        }
 
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        vTaskDelay(pdMS_TO_TICKS(SENSOR_READ_FREQUENCY_MS));
     }
 }
 
 void initDs18b20() {
     ESP_LOGI(TAG, "initDs18b20");
-
-    ow_init(&ow, GPIO_DS18B20_0);
 
     xTaskCreate(loopDs18b20, "ds18b20", 4096, NULL, 2, NULL);
 }

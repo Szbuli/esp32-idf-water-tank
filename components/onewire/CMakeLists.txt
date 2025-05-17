@@ -1,5 +1,11 @@
-set(COMPONENT_ADD_INCLUDEDIRS "include")
-set(COMPONENT_SRCS "ow_init.c" "ow_send.c" "ow_read.c" "ow_reset.c" "ow_romsearch.c")
-set(COMPONENT_REQUIRES "driver")
+if(${IDF_TARGET} STREQUAL esp8266)
+    set(req esp8266 freertos esp_idf_lib_helpers)
+else()
+    set(req driver freertos esp_idf_lib_helpers)
+endif()
 
-register_component()
+idf_component_register(
+    SRCS onewire.c
+    INCLUDE_DIRS .
+    REQUIRES ${req}
+)
