@@ -9,6 +9,7 @@
 #include "math.h"
 
 #define BUF_SIZE (1024)
+#define SENSOR_READ_FREQUENCY_MS 30 * 1000
 
 static const char* TAG = "a02yyuw";
 
@@ -53,7 +54,7 @@ int measure() {
 
     meassuredDistance = ((data[1] << 8) + data[2]);
 
-    ESP_LOGI(TAG, "dist: %d", meassuredDistance);
+    ESP_LOGV(TAG, "dist: %d", meassuredDistance);
 
     if (meassuredDistance < MIN_DISTANCE) {
         return DistanceSensor_A02YYUW_MEASSUREMENT_STATUS_ERROR_MIN_LIMIT;
@@ -69,6 +70,7 @@ int measure() {
 }
 
 void loopA02yyuw() {
+    vTaskDelay(pdMS_TO_TICKS(3000));
     while (1) {
         int measurementStatus;
         int retryCount = 0;
@@ -80,11 +82,11 @@ void loopA02yyuw() {
                 int distanceCm = distance / 10;
                 ESP_LOGI(TAG, "distance: %d cm", distanceCm);
 
-                ESP_LOGI(TAG, "sensorHeight: %d cm", sensorHeight);
-                ESP_LOGI(TAG, "maxWaterLevel: %d cm", maxWaterLevel);
+                ESP_LOGV(TAG, "sensorHeight: %d cm", sensorHeight);
+                ESP_LOGV(TAG, "maxWaterLevel: %d cm", maxWaterLevel);
                 int waterLevelInPercentage = round(((sensorHeight - distanceCm) * 100) / (float)maxWaterLevel);
 
-                ESP_LOGI(TAG, "waterLevelInPercentage: %d", waterLevelInPercentage);
+                ESP_LOGV(TAG, "waterLevelInPercentage: %d", waterLevelInPercentage);
                 char waterLevelStr[10];
                 snprintf(waterLevelStr, sizeof(waterLevelStr), "%d", waterLevelInPercentage);
                 esp_mqtt_client_enqueue(mqtt_client, MQTT_WATER_LEVEL_TOPIC, waterLevelStr, 0, 0, 0, true);
@@ -93,13 +95,13 @@ void loopA02yyuw() {
                 esp_mqtt_client_enqueue(mqtt_client, MQTT_SENSOR_MEASURED_DISTANCE_TOPIC, distanceStr, 0, 0, 0, true);
             }
             else {
-                ESP_LOGI(TAG, "measurementStatus: %d", measurementStatus);
+                ESP_LOGV(TAG, "measurementStatus: %d", measurementStatus);
             }
         } while (measurementStatus != DistanceSensor_A02YYUW_MEASSUREMENT_STATUS_OK && retryCount++ < 4);
 
         int result = measure();
-        ESP_LOGI(TAG, "result code for measure: %d", result);
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        ESP_LOGV(TAG, "result code for measure: %d", result);
+        vTaskDelay(pdMS_TO_TICKS(SENSOR_READ_FREQUENCY_MS));
     }
 }
 

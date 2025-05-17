@@ -27,6 +27,7 @@ void publishTemperature(const char* temperature) {
 void loopDs18b20() {
     float temperature;
     esp_err_t res;
+    vTaskDelay(pdMS_TO_TICKS(3000));
     onewire_reset(SENSOR_GPIO);
     while (1) {
         res = ds18b20_measure_and_read(SENSOR_GPIO, DS18X20_ANY, &temperature);
