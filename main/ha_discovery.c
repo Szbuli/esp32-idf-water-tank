@@ -162,6 +162,7 @@ void publishPumpHaDiscovery() {
     cJSON_AddStringToObject(root, "icon", "mdi:water-pump");
     cJSON_AddStringToObject(root, "unique_id", MQTT_PUMP_TOPIC);
     cJSON_AddStringToObject(root, "command_topic", MQTT_PUMP_TOPIC);
+    cJSON_AddStringToObject(root, "state_topic", MQTT_PUMP_TOPIC);
 
     addDeviceConfig(root);
 
@@ -180,6 +181,7 @@ void publishOverflowPumpHaDiscovery() {
     cJSON_AddStringToObject(root, "icon", "mdi:water-pump");
     cJSON_AddStringToObject(root, "unique_id", MQTT_OVERFLOW_PUMP_TOPIC);
     cJSON_AddStringToObject(root, "command_topic", MQTT_OVERFLOW_PUMP_TOPIC);
+    cJSON_AddStringToObject(root, "state_topic", MQTT_OVERFLOW_PUMP_TOPIC);
 
     addDeviceConfig(root);
 
