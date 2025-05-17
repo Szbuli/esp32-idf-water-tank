@@ -1,4 +1,14 @@
 {
     "idf.flashType": "UART",
-    "idf.portWin": "COM9"
+    "idf.portWin": "COM6",
+    "idf.customExtraVars": {
+        "IDF_TARGET": "esp32"
+    },
+    "idf.openOcdConfigs": [
+        "board/esp32-wrover-kit-3.3v.cfg"
+    ],
+    "files.associations": {
+        "mqtt_topics.h": "c",
+        "a02yyuw.h": "c"
+    }
 }

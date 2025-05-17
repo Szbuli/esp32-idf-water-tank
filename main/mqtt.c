@@ -33,13 +33,15 @@ void mqttEventData(esp_mqtt_event_handle_t event) {
         }
     }
     else if (strcmp(topic, MQTT_OVERFLOW_PUMP_TOPIC) == 0) {
-        if (!!isOverflowPumpAutoModeEnabled()) {
+        if (!isOverflowPumpAutoModeEnabled()) {
             if ((char)payload[1] == 'N') {
                 turnOnRelay2();
             }
             else {
                 turnOffRelay2();
             }
+        } else {
+            ESP_LOGI(TAG, "overflow in auto mode, ignoring overflow pump change");
         }
     }
     else if (strcmp(topic, MQTT_SENSOR_HEIGHT_TOPIC) == 0) {

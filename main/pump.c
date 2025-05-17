@@ -4,8 +4,8 @@
 
 static const char* TAG = "pump";
 
-#define RELAY_1_GPIO GPIO_NUM_18
-#define RELAY_2_GPIO GPIO_NUM_19
+#define RELAY_1_GPIO GPIO_NUM_32
+#define RELAY_2_GPIO GPIO_NUM_33
 
 #define GPIO_LEVEL_LOW 0
 #define GPIO_LEVEL_HIGH 1

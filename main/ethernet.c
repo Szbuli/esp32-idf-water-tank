@@ -1,7 +1,6 @@
 #include <string.h>
 #include "esp_event.h"
 #include "esp_eth.h"
-#include "driver/spi_master.h"
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "driver/gpio.h"
@@ -13,31 +12,17 @@
 #include "esp_netif.h"
 #include "esp_eth_driver.h"
 #include "esp_eth_mac.h"
-#include "esp_eth_mac_spi.h"
 #include "esp_mac.h"
 
 #define CONFIG_CONNECT_ETHERNET 1
-#define CONFIG_CONNECT_WIFI n
-#define CONFIG_USE_INTERNAL_ETHERNET y
+#define CONFIG_CONNECT_WIFI 0
+#define CONFIG_USE_INTERNAL_ETHERNET 1
 #define CONFIG_ETH_MDC_GPIO 23
 #define CONFIG_ETH_MDIO_GPIO 18
-#define CONFIG_ETH_PHY_RST_GPIO 5
+#define CONFIG_ETH_PHY_RST_GPIO 16
 #define CONFIG_ETH_PHY_ADDR 1
 #define CONFIG_ETHERNET_EMAC_TASK_STACK_SIZE 3072
-
-#define CONFIG_USE_W5500 1
-#define CONFIG_ETH_SPI_HOST 2
-#define CONFIG_ETH_SPI_SCLK_GPIO 14
-#define CONFIG_ETH_SPI_MOSI_GPIO 13
-#define CONFIG_ETH_SPI_MISO_GPIO 12
-#define CONFIG_ETH_SPI_CS_GPIO 15
-#define CONFIG_ETH_SPI_CLOCK_MHZ 1 // 36
-#define CONFIG_ETH_SPI_INT_GPIO 4
-#define CONFIG_ETH_PHY_RST_GPIO 5
-#define CONFIG_ETH_PHY_ADDR 1
-
 #define NETIF_DESC_ETH "netif_eth"
-
 
 static const char* TAG = "ethernet";
 static SemaphoreHandle_t s_semph_get_ip_addrs = NULL;
@@ -93,8 +78,7 @@ static esp_eth_mac_t* s_mac = NULL;
 static esp_eth_phy_t* s_phy = NULL;
 static esp_eth_netif_glue_handle_t s_eth_glue = NULL;
 
-static esp_netif_t* eth_start(void)
-{
+static esp_netif_t* eth_start(void) {
     esp_netif_inherent_config_t esp_netif_config = ESP_NETIF_INHERENT_DEFAULT_ETH();
     // Warning: the interface desc is used in tests to capture actual connection details (IP, gw, mask)
     esp_netif_config.if_desc = NETIF_DESC_ETH;
@@ -112,48 +96,23 @@ static esp_netif_t* eth_start(void)
     phy_config.phy_addr = CONFIG_ETH_PHY_ADDR;
     phy_config.reset_gpio_num = CONFIG_ETH_PHY_RST_GPIO;
 
-    gpio_install_isr_service(0);
-    spi_bus_config_t buscfg = {
-        .miso_io_num = CONFIG_ETH_SPI_MISO_GPIO,
-        .mosi_io_num = CONFIG_ETH_SPI_MOSI_GPIO,
-        .sclk_io_num = CONFIG_ETH_SPI_SCLK_GPIO,
-        .quadwp_io_num = -1,
-        .quadhd_io_num = -1,
-    };
-    ESP_ERROR_CHECK(spi_bus_initialize(CONFIG_ETH_SPI_HOST, &buscfg, SPI_DMA_CH_AUTO));
-    spi_device_interface_config_t spi_devcfg = {
-        .mode = 0,
-        .clock_speed_hz = CONFIG_ETH_SPI_CLOCK_MHZ * 1000 * 1000,
-        .spics_io_num = CONFIG_ETH_SPI_CS_GPIO,
-        .queue_size = 20
-    };
+    eth_esp32_emac_config_t esp32_emac_config = ETH_ESP32_EMAC_DEFAULT_CONFIG();
+    esp32_emac_config.smi_gpio.mdc_num = CONFIG_ETH_MDC_GPIO;
+    esp32_emac_config.smi_gpio.mdio_num = CONFIG_ETH_MDIO_GPIO;
+    s_mac = esp_eth_mac_new_esp32(&esp32_emac_config, &mac_config);
 
-    /* w5500 ethernet driver is based on spi driver */
-    eth_w5500_config_t w5500_config = ETH_W5500_DEFAULT_CONFIG(CONFIG_ETH_SPI_HOST, &spi_devcfg);
-    w5500_config.int_gpio_num = CONFIG_ETH_SPI_INT_GPIO;
-    s_mac = esp_eth_mac_new_w5500(&w5500_config, &mac_config);
-    s_phy = esp_eth_phy_new_w5500(&phy_config);
+    s_phy = esp_eth_phy_new_lan87xx(&phy_config);
 
     // Install Ethernet driver
     esp_eth_config_t config = ETH_DEFAULT_CONFIG(s_mac, s_phy);
     ESP_ERROR_CHECK(esp_eth_driver_install(&config, &s_eth_handle));
 
-    /* The SPI Ethernet module might doesn't have a burned factory MAC address, we cat to set it manually.
-       We set the ESP_MAC_ETH mac address as the default, if you want to use ESP_MAC_EFUSE_CUSTOM mac address, please enable the
-       configuration: `ESP_MAC_USE_CUSTOM_MAC_AS_BASE_MAC`
-    */
-    uint8_t eth_mac[6] = { 0 };
-    ESP_ERROR_CHECK(esp_read_mac(eth_mac, ESP_MAC_ETH));
-    ESP_ERROR_CHECK(esp_eth_ioctl(s_eth_handle, ETH_CMD_S_MAC_ADDR, eth_mac));
-
     // combine driver with netif
     s_eth_glue = esp_eth_new_netif_glue(s_eth_handle);
     esp_netif_attach(netif, s_eth_glue);
 
-    // Register user defined event handers
+    // Register user defined event handlers
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &eth_on_got_ip, NULL));
-    esp_event_handler_register(ETH_EVENT, ETHERNET_EVENT_DISCONNECTED, &eth_event_handler, NULL);
-    esp_event_handler_register(ETH_EVENT, ETHERNET_EVENT_CONNECTED, &eth_event_handler, NULL);
 
     esp_eth_start(s_eth_handle);
     return netif;

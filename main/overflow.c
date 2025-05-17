@@ -8,7 +8,7 @@
 
 static const char* TAG = "overflow";
 
-#define OVERFLOW_GPIO GPIO_NUM_21
+#define OVERFLOW_GPIO GPIO_NUM_2
 
 #define GPIO_LEVEL_LOW 0
 #define GPIO_LEVEL_HIGH 1
@@ -23,7 +23,9 @@ int delayCounter = 0;
 const char* OVERFLOW_PUMP_MODE_KEY = "of-pump-mode";
 
 bool isOverflowPumpAutoModeEnabled() {
-    return readMemory(OVERFLOW_PUMP_MODE_KEY);
+    int mode = readMemory(OVERFLOW_PUMP_MODE_KEY);
+    ESP_LOGV(TAG, "isOverflowPumpAutoModeEnabled: %d", mode);
+    return mode != 0;
 }
 
 void turnOnOverFlowPump() {
@@ -76,7 +78,7 @@ void loopOverflow() {
     while (1) {
         readOverflowSensor();
 
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
 
@@ -90,6 +92,8 @@ void initOverflow() {
     gpio_config(&io_conf);
 
     autoMode = isOverflowPumpAutoModeEnabled();
+
+    ESP_LOGI(TAG, "overflow auto mode: %d", autoMode);
 
     xTaskCreate(loopOverflow, "overflow", 4096, NULL, 2, NULL);
 }
