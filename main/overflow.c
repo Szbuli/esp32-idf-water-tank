@@ -12,11 +12,12 @@ static const char* TAG = "overflow";
 
 #define GPIO_LEVEL_LOW 0
 #define GPIO_LEVEL_HIGH 1
+#define GPIO_LEVEL_INVALID 2
 
 #define GPIO_OUTPUT_PIN_SEL  (1ULL<<OVERFLOW_GPIO)
 
 bool autoMode = false;
-int buttonState = 2; // 2 so it will be changed on first read
+int buttonState = GPIO_LEVEL_INVALID;
 int counter = 100;
 int delayCounter = 0;
 bool overrunActive = false;
@@ -112,6 +113,6 @@ void persistOverflowPumpAutoMode(bool enabled) {
 
     // reset 
     turnOffOverFlowPump();
-    buttonState = 3;
+    buttonState = GPIO_LEVEL_INVALID;
 }
 
