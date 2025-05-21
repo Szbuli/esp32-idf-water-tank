@@ -95,7 +95,7 @@ To enable automatic bootloader mode (no button pressing), wire **EN** and **IO0*
 | `TX` (GPIO1)   | `RX`                 |
 | `RX` (GPIO3)   | `TX`                 |
 | `GND`          | `GND`                |
-| `EN`           | `RTS` *(via 0.1 µF cap)* |
-| `IO0`          | `DTR`                |
+| `EN`           | `RTS`                |
+| `IO0`          | `DTR` *(via 0.1 µF cap)* |
 | `3.3V`         | `VCC`                |
 | `5V`           | `VCC` *(3.3V may not supply enough power)* |
