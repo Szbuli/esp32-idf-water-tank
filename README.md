@@ -36,7 +36,7 @@ Ethernet is handled internally and does **not** require SPI configuration.
 
 | GPIO | Function |
 |------|----------|
-| 2    | Input    |
+| 14    | Input    |
 
 > ⚠️ **Note:** Connect the other pin of the sensor to **GND**. Use an **external pull-up resistor** if needed.
 

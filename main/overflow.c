@@ -8,7 +8,7 @@
 
 static const char* TAG = "overflow";
 
-#define OVERFLOW_GPIO GPIO_NUM_2
+#define OVERFLOW_GPIO GPIO_NUM_14
 
 #define GPIO_LEVEL_LOW 0
 #define GPIO_LEVEL_HIGH 1
